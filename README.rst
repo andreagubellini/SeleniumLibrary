@@ -10,8 +10,8 @@ SeleniumLibrary_ is a web testing library for `Robot Framework`_ that
 utilizes the Selenium_ tool internally. The project is hosted on GitHub_
 and downloads can be found from PyPI_.
 
-SeleniumLibrary works with Selenium 3. It supports Python 2.7 as well as
-Python 3.4 or newer. In addition to the normal Python_ interpreter, it
+SeleniumLibrary works with Selenium 3 and 4. It supports Python 2.7 as well as
+Python 3.6 or newer. In addition to the normal Python_ interpreter, it
 works also with PyPy_ and Jython_. Unfortunately Selenium_ is not
 currently supported by IronPython_ and thus this library does not work with
 IronPython either.
@@ -23,12 +23,15 @@ different versions and the overall project history.
 
 .. image:: https://img.shields.io/pypi/v/robotframework-seleniumlibrary.svg?label=version
    :target: https://pypi.python.org/pypi/robotframework-seleniumlibrary
+   
+.. image:: https://img.shields.io/pypi/dm/robotframework-seleniumlibrary.svg
+   :target: https://pypi.python.org/pypi/robotframework-seleniumlibrary
 
 .. image:: https://img.shields.io/pypi/l/robotframework-seleniumlibrary.svg
    :target: https://www.apache.org/licenses/LICENSE-2.0
 
-.. image:: https://api.travis-ci.org/robotframework/SeleniumLibrary.png
-   :target: https://travis-ci.org/robotframework/SeleniumLibrary
+.. image:: https://github.com/robotframework/SeleniumLibrary/workflows/SeleniumLibrary%20CI/badge.svg
+    :target: https://github.com/robotframework/SeleniumLibrary/actions?query=workflow%3A%22SeleniumLibrary+CI%22
 
 Keyword documentation
 ---------------------
@@ -220,6 +223,9 @@ Selenium2Library 1.8.0 and earlier  Selenium 2 and 3            Python 2.6-2.7  
 SeleniumLibrary 3.0 and 3.1         Selenium 2 and 3            Python 2.7 and 3.3+         Selenium2Library renamed and with Python 3 support and new architecture.
 SeleniumLibrary 3.2                 Selenium 3                  Python 2.7 and 3.4+         Drops Selenium 2 support.
 SeleniumLibrary 4.0                 Selenium 3                  Python 2.7 and 3.4+         Plugin API and support for event friging webdriver.
+SeleniumLibrary 4.1                 Selenium 3                  Python 2.7 and 3.5+         Drops Python 3.4 support.
+SeleniumLibrary 4.2                 Selenium 3                  Python 2.7 and 3.5+         Supports only Selenium 3.141.0 or newer.
+SeleniumLibrary 4.4                 Selenium 3 and 4            Python 2.7 and 3.6+         New PythonLibCore and dropped Python 3.5 support.
 Selenium2Library 3.0                Depends on SeleniumLibrary  Depends on SeleniumLibrary  Thin wrapper for SeleniumLibrary 3.0 to ease transition.
 ==================================  ==========================  ==========================  ===============
 
@@ -263,7 +269,7 @@ Going forward, all new development will happen in the new SeleniumLibrary
 project.
 
 .. _Robot Framework: https://robotframework.org
-.. _Selenium: https://seleniumhq.org
+.. _Selenium: https://www.seleniumhq.org/
 .. _SeleniumLibrary: https://github.com/robotframework/SeleniumLibrary
 .. _Selenium2Library: https://github.com/robotframework/Selenium2Library
 .. _Old SeleniumLibrary: https://github.com/robotframework/OldSeleniumLibrary

@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from SeleniumLibrary.base import keyword, LibraryComponent
-from SeleniumLibrary.utils import is_truthy, secs_to_timestr
+from SeleniumLibrary.utils import secs_to_timestr
 
 
 class AlertKeywords(LibraryComponent):
@@ -133,6 +133,7 @@ class AlertKeywords(LibraryComponent):
         wait = WebDriverWait(self.driver, timeout)
         try:
             return wait.until(EC.alert_is_present())
-        except WebDriverException:
-            raise AssertionError('Alert not found in %s.'
-                                 % secs_to_timestr(timeout))
+        except TimeoutException:
+            raise AssertionError('Alert not found in %s.' % secs_to_timestr(timeout))
+        except WebDriverException as err:
+            raise AssertionError('An exception occurred waiting for alert: %s' % err)

@@ -28,8 +28,9 @@ Create Webdriver With Duplicate Arguments
 
 Create Webdriver With Bad Keyword Argument Dictionary
     [Documentation]    Invalid arguments types
-    Run Keyword And Expect Error    kwargs must be a dictionary.
-    ...    Create Webdriver    Firefox    kwargs={'spam': 'eggs'}
+    ${status}    ${error} =    Run Keyword And Ignore Error    Create Webdriver    Firefox    kwargs={'spam': 'eggs'}
+    Should Be Equal    ${status}    FAIL
+    Should Match Regexp    ${error}    (TypeError: __init__\\(\\) got an unexpected keyword argument 'spam'|kwargs must be a dictionary\.)
 
 *** Keywords ***
 Set Driver Variables
@@ -46,10 +47,9 @@ Set Driver Variables
     ...    htmlunitwithjs=HTMLUNITWITHJS    android=ANDROID    iphone=IPHONE
     ...    safari=SAFARI    headlessfirefox=FIREFOX    headlesschrome=CHROME
     ${dc name}=    Get From Dictionary    ${dc names}    ${BROWSER.lower().replace(' ', '')}
-    ${caps}=    Evaluate    sys.modules['selenium.webdriver'].DesiredCapabilities.${dc name}
-    ...    selenium.webdriver,sys
-    ${url as str}=    Evaluate    str('${REMOTE_URL}')    # cannot be unicode for versions >= 2.32
+    ${caps}=    Evaluate    selenium.webdriver.DesiredCapabilities.${dc name}
+    ...                     modules=selenium, selenium.webdriver
     ${kwargs}=    Create Dictionary
     Run Keyword If    "${name}"=="Remote"    Set To Dictionary    ${kwargs}    command_executor
-    ...    ${url as str}    desired_capabilities    ${caps}
+    ...    ${REMOTE_URL}    desired_capabilities    ${caps}
     Set Test Variable    ${KWARGS}    ${kwargs}

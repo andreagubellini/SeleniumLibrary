@@ -196,7 +196,7 @@ class ElementKeywords(LibraryComponent):
 
     @keyword
     def page_should_not_contain_element(self, locator, message=None, loglevel='TRACE'):
-        """Verifies that element ``locator`` is found on the current page.
+        """Verifies that element ``locator`` is not found on the current page.
 
         See the `Locating elements` section for details about the locator
         syntax.
@@ -571,7 +571,7 @@ newDiv.parentNode.style.overflow = 'hidden';
             self._click_with_modifier(locator, ['link', 'link'], modifier)
 
     @keyword
-    def click_element(self, locator, modifier=False):
+    def click_element(self, locator, modifier=False, action_chain=False):
         """Click the element identified by ``locator``.
 
         See the `Locating elements` section for details about the locator
@@ -586,18 +586,36 @@ newDiv.parentNode.style.overflow = 'hidden';
         [https://seleniumhq.github.io/selenium/docs/api/py/webdriver/selenium.webdriver.common.keys.html#selenium.webdriver.common.keys.Keys.ALT|ALT key]
         . If ``modifier`` does not match to Selenium Keys, keyword fails.
 
+        If ``action_chain`` argument is true, see `Boolean arguments` for more
+        details on how to set boolean argument, then keyword uses ActionChain
+        based click instead of the <web_element>.click() function. If both
+        ``action_chain`` and ``modifier`` are defined, the click will be
+        performed using ``modifier`` and ``action_chain`` will be ignored.
+
         Example:
-        | Click Element | id:button | | # Would click element without any modifiers. |
-        | Click Element | id:button | CTRL | # Would click element with CTLR key pressed down. |
-        | Click Element | id:button | CTRL+ALT | # Would click element with CTLR and ALT keys pressed down. |
+        | Click Element | id:button |                   | # Would click element without any modifiers.               |
+        | Click Element | id:button | CTRL              | # Would click element with CTLR key pressed down.          |
+        | Click Element | id:button | CTRL+ALT          | # Would click element with CTLR and ALT keys pressed down. |
+        | Click Element | id:button | action_chain=True | # Clicks the button using an Selenium  ActionChains        |
 
         The ``modifier`` argument is new in SeleniumLibrary 3.2
+        The ``action_chain`` argument is new in SeleniumLibrary 4.1
         """
-        if is_falsy(modifier):
+        if is_truthy(modifier):
+            self._click_with_modifier(locator, [None, None], modifier)
+        elif is_truthy(action_chain):
+            self._click_with_action_chain(locator)
+        else:
             self.info("Clicking element '%s'." % locator)
             self.find_element(locator).click()
-        else:
-            self._click_with_modifier(locator, [None, None], modifier)
+
+    def _click_with_action_chain(self, locator):
+        self.info("Clicking '%s' using an action chain." % locator)
+        action = ActionChains(self.driver)
+        element = self.find_element(locator)
+        action.move_to_element(element)
+        action.click()
+        action.perform()
 
     def _click_with_modifier(self, locator, tag, modifier):
         self.info("Clicking %s '%s' with %s." % (tag if tag[0] else 'element', locator, modifier))
@@ -827,7 +845,6 @@ return !element.dispatchEvent(evt);
     def press_keys(self, locator=None, *keys):
         """Simulates the user pressing key(s) to an element or on the active browser.
 
-
         If ``locator`` evaluates as false, see `Boolean arguments` for more
         details, then the ``keys`` are sent to the currently active browser.
         Otherwise element is searched and ``keys`` are send to the element
@@ -875,48 +892,41 @@ return !element.dispatchEvent(evt);
         parsed_keys = self._parse_keys(*keys)
         if is_truthy(locator):
             self.info('Sending key(s) %s to %s element.' % (keys, locator))
+            element = self.find_element(locator)
+            ActionChains(self.driver).click(element).perform()
         else:
             self.info('Sending key(s) %s to page.' % str(keys))
-        self._press_keys(locator, parsed_keys)
-
-    def _press_keys(self, locator, parsed_keys):
-        if is_truthy(locator):
-            element = self.find_element(locator)
-        else:
             element = None
         for parsed_key in parsed_keys:
             actions = ActionChains(self.driver)
-            special_keys = []
             for key in parsed_key:
-                if self._selenium_keys_has_attr(key.original):
-                    special_keys = self._press_keys_special_keys(actions, element, parsed_key,
-                                                                 key, special_keys)
+                if key.special:
+                    self._press_keys_special_keys(actions, element, parsed_key, key)
                 else:
-                    self._press_keys_normal_keys(actions, element, key)
-            for special_key in special_keys:
-                self.info('Releasing special key %s.' % special_key.original)
-                actions.key_up(special_key.converted)
+                    self._press_keys_normal_keys(actions, key)
+            self._special_key_up(actions, parsed_key)
             actions.perform()
 
-    def _press_keys_normal_keys(self, actions, element, key):
+    def _press_keys_normal_keys(self, actions, key):
         self.info('Sending key%s %s' % (plural_or_not(key.converted), key.converted))
-        if element:
-            actions.send_keys_to_element(element, key.converted)
-        else:
-            actions.send_keys(key.converted)
+        actions.send_keys(key.converted)
 
-    def _press_keys_special_keys(self, actions, element, parsed_key, key, special_keys):
+    def _press_keys_special_keys(self, actions, element, parsed_key, key):
         if len(parsed_key) == 1 and element:
             self.info('Pressing special key %s to element.' % key.original)
-            actions.send_keys_to_element(element, key.converted)
+            actions.send_keys(key.converted)
         elif len(parsed_key) == 1 and not element:
             self.info('Pressing special key %s to browser.' % key.original)
             actions.send_keys(key.converted)
         else:
             self.info('Pressing special key %s down.' % key.original)
             actions.key_down(key.converted)
-            special_keys.append(key)
-        return special_keys
+
+    def _special_key_up(self, actions, parsed_key):
+        for key in parsed_key:
+            if key.special:
+                self.info('Releasing special key %s.' % key.original)
+                actions.key_up(key.converted)
 
     @keyword
     def get_all_links(self):
@@ -992,7 +1002,7 @@ return !element.dispatchEvent(evt);
 
     @keyword
     def page_should_not_contain_image(self, locator, message=None, loglevel='TRACE'):
-        """Verifies image identified by ``locator`` is found from current page.
+        """Verifies image identified by ``locator`` is not found from current page.
 
         See the `Locating elements` section for details about the locator
         syntax. When using the default locator strategy, images are searched
@@ -1137,14 +1147,14 @@ return !element.dispatchEvent(evt);
         return list_keys
 
     def _convert_special_keys(self, keys):
-        KeysRecord = namedtuple('KeysRecord', 'converted, original')
+        KeysRecord = namedtuple('KeysRecord', 'converted, original special')
         converted_keys = []
         for key in keys:
             key = self._parse_aliases(key)
             if self._selenium_keys_has_attr(key):
-                converted_keys.append(KeysRecord(getattr(Keys, key), key))
+                converted_keys.append(KeysRecord(getattr(Keys, key), key, True))
             else:
-                converted_keys.append(KeysRecord(key, key))
+                converted_keys.append(KeysRecord(key, key, False))
         return converted_keys
 
     def _selenium_keys_has_attr(self, key):
